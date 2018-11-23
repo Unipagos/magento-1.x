@@ -1,0 +1,11 @@
+<div class="form-list" id="payment_form_<?php echo $this->getMethodCode() ?>" style="display:none;">
+    <div>
+        <label for="mobileNumber" class="required"><em>*</em><?php echo $this->__('Mobile Number') ?></label>
+        <span>
+      <input type="text" title="<?php echo $this->__('Mobile Number') ?>" name="payment[mobile_number]" class="input-text required-entry" id="mobileNumber" value="<?php echo $this->htmlEscape($this->getInfoData('mobile_number')) ?>" />
+    </span>
+    </div>
+</div>
+<div>
+    <?php echo $this->getMethod()->getConfigData('message');?>
+</div>

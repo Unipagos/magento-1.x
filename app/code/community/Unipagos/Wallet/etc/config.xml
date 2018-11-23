@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+<modules>
+    <Unipagos_Wallet>
+        <version>1.0.1</version>
+    </Unipagos_Wallet>
+</modules>
+<global>
+    <fieldsets>
+        <sales_convert_quote_payment>
+            <mobile_number>
+                <to_order_payment>*</to_order_payment>
+            </mobile_number>
+        </sales_convert_quote_payment>
+    </fieldsets>
+    <blocks>
+        <wallet>
+            <class>Unipagos_Wallet_Block</class>
+        </wallet>
+    </blocks>
+    <models>
+        <wallet>
+            <class>Unipagos_Wallet_Model</class>
+        </wallet>
+    </models>
+    <helpers>
+        <wallet>
+            <class>Unipagos_Wallet_Helper</class>
+        </wallet>
+         <wallet_api>
+            <class>Unipagos_Wallet_Helper_Wallet_Api</class>
+        </wallet_api>
+    </helpers>
+    <resources>
+        <wallet_setup>
+            <setup>
+                <module>Unipagos_Wallet</module>
+                <class>Mage_Sales_Model_Resource_Setup</class>
+            </setup>
+            <connection>
+                <use>core_setup</use>
+            </connection>
+        </wallet_setup>
+    </resources>
+    <events>
+        <sales_order_place_before>
+            <observers>
+                <wallet_sales_order_save_before>
+                    <class>wallet/observer</class>
+                    <method>beforeSaveOrder</method>
+                </wallet_sales_order_save_before>
+            </observers>
+        </sales_order_place_before>
+    </events>
+</global>
+
+<default>
+    <payment>
+        <wallet_upgrade>
+            <model>wallet/method_standard</model>
+            <title>Pay Securely via Card</title>
+            <description><![CDATA[Pay securely using your Unipagos mobile wallet.]]></description>
+            <payment_action>authorize_capture</payment_action>
+            <cctypes>AE,MC,VI</cctypes>
+            <order_status>pending</order_status>
+            <mode>1</mode>
+        </wallet_upgrade>
+    </payment>
+</default>
+<frontend>
+    <routers>
+        <wallet>
+            <use>standard</use>
+                <args>
+                    <module>Unipagos_Wallet</module>
+                    <frontName>wallet</frontName>
+                </args>
+            </wallet>
+    </routers>
+    <layout>
+      <updates>
+        <wallet>
+            <file>wallet.xml</file>
+        </wallet>
+      </updates>
+    </layout>
+</frontend>
+</config>
