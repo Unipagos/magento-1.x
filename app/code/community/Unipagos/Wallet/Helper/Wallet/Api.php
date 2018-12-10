@@ -3,7 +3,7 @@ class Unipagos_Wallet_Helper_Wallet_Api extends Mage_Core_Helper_Abstract
 {
     const MODULE_NAME          = 'Unipagos_Wallet';
 
-	const TEST_REGHOST         = 'https://mobile.dev.unipagos.com';
+    const TEST_REGHOST         = 'https://mobile.dev.unipagos.com';
     const TEST_PAYHOST         = 'https://pay.dev.unipagos.com';
     const TEST_TOKENIZER       = 'https://tok-write.dev.unipagos.com/tkwriter/cors/1.0/tokenizer/card';
 
@@ -17,17 +17,17 @@ class Unipagos_Wallet_Helper_Wallet_Api extends Mage_Core_Helper_Abstract
 
     public function getApiConfigData()
     {
-    	$data  =array();
+        $data  =array();
         $moduleDir = Mage::getModuleDir('', self::MODULE_NAME);
-    	$environment = $this->getApiEnvironment();
+        $environment = $this->getApiEnvironment();
 
-    	$data['reghost']      = ( 'production' === $environment ) ? self::PRODUCTION_REGHOST : self::TEST_REGHOST;
+        $data['reghost']      = ( 'production' === $environment ) ? self::PRODUCTION_REGHOST : self::TEST_REGHOST;
         $data['payhost']      = ( 'production' === $environment ) ? self::PRODUCTION_PAYHOST : self::TEST_PAYHOST;
         $data['tokenizer']    = ( 'production' === $environment ) ? self::PRODUCTION_TOKENIZER : self::TEST_TOKENIZER;
         $data['api_key']      = $this->getStoreConfig('payment/wallet_upgrade/api_key');
         $data['api_password'] = Mage::helper('core')->decrypt($this->getStoreConfig('payment/wallet_upgrade/api_password'));
         $data['key_file']     = $moduleDir . '/credentials/' . $environment . '/merchant.key';
-        $data['key_pass']     =	Mage::helper('core')->decrypt( $this->getStoreConfig('payment/wallet_upgrade/key_password'));
+        $data['key_pass']     = Mage::helper('core')->decrypt( $this->getStoreConfig('payment/wallet_upgrade/key_password'));
         $data['cert_file']    = $moduleDir . '/credentials/' . $environment . '/merchant.cer';
         $data['ca_path_file'] = $moduleDir . '/credentials/' . $environment . '/unipagos.cer';
         $data['environment']  = $environment;
@@ -41,23 +41,23 @@ class Unipagos_Wallet_Helper_Wallet_Api extends Mage_Core_Helper_Abstract
     }
 
 
-	public function getApiEnvironment()
-	{	
-		$environment = 'sandbox';
-		$mode = $this->getStoreConfig('payment/wallet_upgrade/mode');
-		if($mode==false){
-			$environment = 'production';
-		}
-		return $environment;
+    public function getApiEnvironment()
+    {   
+        $environment = 'sandbox';
+        $mode = $this->getStoreConfig('payment/wallet_upgrade/mode');
+        if($mode==false){
+            $environment = 'production';
+        }
+        return $environment;
 
-	}
+    }
 
-	public function getStoreConfig($path){
-		return Mage::getStoreConfig($path, Mage::app()->getStore());
-	}
+    public function getStoreConfig($path){
+        return Mage::getStoreConfig($path, Mage::app()->getStore());
+    }
 
 
-	public function perform_get( $service, $json, $host = null ) {
+    public function perform_get( $service, $json, $host = null ) {
         return $this->perform_request( FALSE, $service, $json, $host );
     }
 
@@ -67,8 +67,8 @@ class Unipagos_Wallet_Helper_Wallet_Api extends Mage_Core_Helper_Abstract
 
 
     public function perform_request( $post, $service, $json, $host = null ) 
-    {	
-    	$apiConfig = $this->getApiConfigData();
+    {   
+        $apiConfig = $this->getApiConfigData();
         $this->debug_message('Request data on '.$service . ' below:');
         $this->debug_message($json );
 
@@ -145,20 +145,30 @@ class Unipagos_Wallet_Helper_Wallet_Api extends Mage_Core_Helper_Abstract
 
     public function request_access_code( $order, $method = 'ProcessPayment', $trx_type = 'Purchase', $order_total = null ) 
     {
+        $region = $order->getQuote()->getBillingAddress()->getRegion();
+        if(!empty($region)){
+            $state = $region;
+        }
+        else{
+            
+            // set NA if state is not available for countries 
+            $state = 'NA';
+        }
+
         // set up request object
         $request = array(
             'ipAddress'   => $order->getRemoteIp(),
             'amount'      => number_format($order->getGrandTotal(), 2, '.', '').$order->getOrderCurrencyCode(),
-            'firstName'   => $order->getCustomerFirstname(),
-            'lastName'    => $order->getCustomerLastname(),
-            'companyName' => substr( $order->getQuote()->getShippingAddress()->getCompany(), 0, 50 ),
-            'street1'     => $order->getQuote()->getShippingAddress()->getStreet1(),
-            'street2'     => $order->getQuote()->getShippingAddress()->getStreet2(),
-            'city'        => $order->getQuote()->getShippingAddress()->getCity(),
-            'state'       => $order->getQuote()->getShippingAddress()->getRegion(),
-            'postalCode'  => $order->getQuote()->getShippingAddress()->getPostcode(),
-            'country'     => strtoupper( $order->getQuote()->getShippingAddress()->getCountryId() ),
-            'email'       => $order->getCustomerEmail(),
+            'firstName'   => $order->getQuote()->getBillingAddress()->getFirstname(),
+            'lastName'    => $order->getQuote()->getBillingAddress()->getLastname(),
+            'companyName' => substr( $order->getQuote()->getBillingAddress()->getCompany(), 0, 50 ),
+            'street1'     => $order->getQuote()->getBillingAddress()->getStreet1(),
+            'street2'     => $order->getQuote()->getBillingAddress()->getStreet2(),
+            'city'        => $order->getQuote()->getBillingAddress()->getCity(),
+            'state'       => $state,
+            'postalCode'  => $order->getQuote()->getBillingAddress()->getPostcode(),
+            'country'     => strtoupper( $order->getQuote()->getBillingAddress()->getCountryId() ),
+            'email'       => $order->getQuote()->getBillingAddress()->getEmail(),
             'phone'       => preg_replace("/[^0-9]/", "", $order->getPayment()->getMobileNumber()),
         );
 
@@ -228,10 +238,10 @@ class Unipagos_Wallet_Helper_Wallet_Api extends Mage_Core_Helper_Abstract
 
     public function debug_message($message)
     {
-    	if ( is_array( $message ) || is_object( $message ) ) {
+        if ( is_array( $message ) || is_object( $message ) ) {
             $message = print_r( $message, true );
         }
-    	Mage::log($message, null, 'unipagos_wallet.log');
+        Mage::log($message, null, 'unipagos_wallet.log');
     }
 
     /**
